@@ -116,6 +116,8 @@ class PlayerAvatar extends StatelessWidget {
                         .round()
                         .clamp(64, 512)
                         .toInt(),
+                frameBuilder: (_, image, frame, _) =>
+                    frame == null ? fallback : image,
                 errorBuilder: (_, error, stack) => fallback,
               ),
       ),

@@ -40,7 +40,10 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Save defaults'));
+    await tester.pumpAndSettle();
+    final saveDefaults = find.widgetWithText(FilledButton, 'Save defaults');
+    expect(saveDefaults.hitTestable(), findsOneWidget);
+    await tester.tap(saveDefaults);
     await tester.pumpAndSettle();
     expect((await SettingsRepository(db).load()).minutes, 15);
     appRouter.go('/sessions/new');
