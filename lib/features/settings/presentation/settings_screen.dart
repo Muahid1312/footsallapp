@@ -113,13 +113,14 @@ class _SettingsState extends ConsumerState<SettingsScreen> {
     final maintenance = ref.read(maintenanceProvider.notifier);
     BackupService? service;
     try {
-      service = await ref.read(backupServiceProvider.future);
+      final activeService = await ref.read(backupServiceProvider.future);
+      service = activeService;
       selected = await ref.read(deviceFilesProvider).pick('backup');
       if (selected == null) {
         return;
       }
       maintenance.state = true;
-      prepared = await service.prepare(File(selected));
+      prepared = await activeService.prepare(File(selected));
       maintenance.state = false;
       if (!mounted) {
         return;
@@ -146,7 +147,7 @@ class _SettingsState extends ConsumerState<SettingsScreen> {
       } catch (_) {
         /* Validated backup can recover an unreadable current database. */
       }
-      await service.activate(prepared, current);
+      await activeService.activate(prepared, current);
       activated = true;
       ref.invalidate(databaseProvider);
       refreshData(ref);

@@ -353,7 +353,7 @@ class _PosterState extends ConsumerState<WinnerPosterScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _order.length,
                 onReorder: _busy
-                    ? (_, __) {}
+                    ? (_, _) {}
                     : (old, next) => setState(() {
                         if (next > old) {
                           next--;

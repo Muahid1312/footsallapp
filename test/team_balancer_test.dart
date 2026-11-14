@@ -8,7 +8,7 @@ void main() {
   test('two teams balance skill estimates without losing membership', () {
     final r = BalanceRequest(
       players: [
-        for (final n in [10, 9, 8, 1, 2, 3]) BalancePlayer('$n', rating: n),
+        for (final n in [10, 9, 8, 1, 2, 6]) BalancePlayer('$n', rating: n),
       ],
       teams: ['a', 'b'],
     );
@@ -16,6 +16,24 @@ void main() {
     validateBalance(r, result.assignments);
     expect(result.spread, lessThan(.75));
   });
+  test(
+    'an unavoidable strength gap is reported honestly for uneven abilities',
+    () {
+      final request = BalanceRequest(
+        players: [
+          for (final rating in [10, 9, 8, 1, 2, 3])
+            BalancePlayer('$rating', rating: rating),
+        ],
+        teams: ['a', 'b'],
+      );
+      final result = generateBalance(request);
+      validateBalance(request, result.assignments);
+      // Three high and three low ratings cannot be split into equal three-player
+      // sums: the closest valid partition totals 18 versus 15, averaging 6 versus 5.
+      expect(result.spread, closeTo(1, 1e-9));
+      expect(result.quality, 'Moderate strength spread');
+    },
+  );
   test('three teams use equal capacity and bounded optimization', () {
     final r = BalanceRequest(players: players(9), teams: ['a', 'b', 'c']);
     final result = generateBalance(r);

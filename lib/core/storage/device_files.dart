@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 
 /// Android SAF and narrowly scoped FileProvider. No storage/account permissions.

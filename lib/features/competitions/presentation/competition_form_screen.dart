@@ -285,14 +285,14 @@ class _CompetitionFormState extends ConsumerState<CompetitionFormScreen> {
                                   requestId: _id,
                                 );
                               }
-                              if (mounted) {
+                              if (context.mounted) {
                                 refreshData(ref);
                                 context.pushReplacement(
                                   '/competitions/${widget.competitionId ?? _id}',
                                 );
                               }
                             } catch (e) {
-                              if (mounted) {
+                              if (context.mounted) {
                                 showError(context, e);
                               }
                             } finally {

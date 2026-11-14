@@ -109,6 +109,7 @@ class PosterRenderer {
                   accent.withValues(alpha: .38),
                   const Color(0xFF0B1420),
                 ],
+          const [0.0, 0.5, 1.0],
         ),
     );
     if (style == PosterStyle.championsNight) {

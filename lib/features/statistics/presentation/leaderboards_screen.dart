@@ -134,7 +134,7 @@ class _LeaderboardsState extends ConsumerState<LeaderboardsScreen> {
                 builder: (b) {
                   final rows = b.leaderboard(
                     _metric,
-                    minimumAppearances: validMinimum ? minimum! : 3,
+                    minimumAppearances: validMinimum ? minimum : 3,
                   );
                   if (rows.isEmpty) {
                     return const EmptyState(

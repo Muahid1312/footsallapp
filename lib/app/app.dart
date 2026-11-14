@@ -65,7 +65,7 @@ class _SaturdayFutsalAppState extends ConsumerState<SaturdayFutsalApp>
         canPop: !busy,
         child: Stack(
           children: [
-            if (child != null) child,
+            ?child,
             if (busy) ...[
               const ModalBarrier(dismissible: false, color: Color(0xDD08110E)),
               const Center(
