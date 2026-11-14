@@ -1,0 +1,98 @@
+name: Android checks and personal testing APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Prepare build reports
+        run: mkdir -p reports
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2.21.0
+        with:
+          flutter-version: '3.35.7'
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        id: dependencies
+        continue-on-error: true
+        run: flutter pub get 2>&1 | tee reports/dependencies.log
+      - name: Analyze Dart
+        id: analyze
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        run: flutter analyze 2>&1 | tee reports/analyze.log
+      - name: Run all Flutter regression tests once
+        id: tests
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        run: flutter test --reporter expanded 2>&1 | tee reports/tests.log
+      - name: Build architecture-specific development APKs
+        id: apk
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        run: flutter build apk --debug --split-per-abi 2>&1 | tee reports/build.log
+      - name: Publish clearly labeled testing artifacts and diagnostics
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPENDENCIES_RESULT: ${{ steps.dependencies.outcome }}
+          ANALYZE_RESULT: ${{ steps.analyze.outcome }}
+          TESTS_RESULT: ${{ steps.tests.outcome }}
+          APK_RESULT: ${{ steps.apk.outcome }}
+        run: |
+          mkdir -p reports
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          root = os.environ['GITHUB_SERVER_URL'] + '/' + os.environ['GITHUB_REPOSITORY']
+          checks = [('Dependencies', 'DEPENDENCIES_RESULT'), ('Dart analysis', 'ANALYZE_RESULT'),
+                    ('Flutter tests', 'TESTS_RESULT'), ('APK build', 'APK_RESULT')]
+          body = ['Personal testing build; NOT a production release.', '',
+                  'These APKs use Android development signing and are debuggable.',
+                  'No device acceptance or public-release readiness is claimed.', '',
+                  'Source: ' + root + '/commit/' + os.environ['GITHUB_SHA'],
+                  'Run: ' + root + '/actions/runs/' + os.environ['GITHUB_RUN_ID'], '',
+                  *[label + ': ' + (os.environ.get(key) or 'not run') for label, key in checks], '',
+                  'Choose app-arm64-v8a-debug.apk for most modern Android phones (Android 7/API 24 or newer).',
+                  'The armeabi-v7a and x86_64 files support their corresponding devices/emulators.',
+                  'If there are no APK assets, the build failed; attached logs show the failure.']
+          Path('reports/status.md').write_text('\n'.join(body) + '\n')
+          PY
+          tag="debug-${GITHUB_SHA:0:7}"
+          title="Personal testing build ${GITHUB_SHA:0:7}"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --target "$GITHUB_SHA" --prerelease --title "$title" --notes-file reports/status.md
+          gh release edit "$tag" --prerelease --title "$title" --notes-file reports/status.md
+          shopt -s nullglob
+          assets=(reports/*.log reports/status.md build/app/outputs/flutter-apk/*-debug.apk)
+          gh release upload "$tag" "${assets[@]}" --clobber
+      - name: Preserve failed validation as a failed workflow result
+        if: always()
+        env:
+          DEPENDENCIES_RESULT: ${{ steps.dependencies.outcome }}
+          ANALYZE_RESULT: ${{ steps.analyze.outcome }}
+          TESTS_RESULT: ${{ steps.tests.outcome }}
+          APK_RESULT: ${{ steps.apk.outcome }}
+        run: |
+          test "$DEPENDENCIES_RESULT" = success
+          test "$ANALYZE_RESULT" = success
+          test "$TESTS_RESULT" = success
+          test "$APK_RESULT" = success
