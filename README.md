@@ -6,12 +6,18 @@ players, attendance, sessions, saved teams, a live match engine, competitions,
 standings/champions, balancing, careers, leaderboards, MVP, winner posters, CSV
 import, local settings, and staged backup/restore. No account or backend is required.
 
-**Release verdict: NO-GO.** Source implementation is present, but Flutter analysis,
-Flutter tests, APK packaging, and Android acceptance are unverified. Dart SDK
-bootstrap is blocked by HTTP 403 from `storage.googleapis.com`. Release signing
-credentials are absent. **No APK was generated.** The saved network/startup draft
-must be reviewed/saved in environment settings; saving a draft does not change the
-runtime or publish a prepared environment.
+**Personal-testing APKs are available.**
+[Download ARM64 APK](https://github.com/Muahid1312/footsallapp/releases/download/debug-2c2cb54/app-arm64-v8a-debug.apk)
+for most Android phones, or choose another architecture from the
+[testing build](https://github.com/Muahid1312/footsallapp/releases/tag/debug-2c2cb54).
+GitHub Actions completed clean Dart analysis, **145 passing Flutter tests**, and
+the three debug APK builds. The downloaded ARM64 APK's signature/package were verified.
+
+**Production release verdict: NO-GO.** These artifacts use development signing;
+private release signing and physical Android acceptance remain outstanding. The
+local cloud still blocks SDK bootstrap with HTTP 403 from `storage.googleapis.com`;
+the successful checks/builds ran on GitHub's runner. Review/save the saved network
+draft for local development; a draft save does not apply or publish the environment.
 
 See [Phase 5 delivery and release notes](docs/phase5.md),
 [balancing/statistics/MVP rules](docs/phase4.md),
@@ -96,8 +102,9 @@ The release path above is expected output, **not an existing artifact**. Signing
 uses ignored `android/key.properties` or the four documented `FUTSAL_*` variables;
 see [signing and installation](docs/phase5.md#release-signing-build-and-installation).
 Release packaging refuses missing signing configuration and never silently uses
-a debug key. The debug APK, if successfully built, would be
-`build/app/outputs/flutter-apk/app-debug.apk` and is for development only.
+a debug key. A local universal debug build would produce
+`build/app/outputs/flutter-apk/app-debug.apk`; CI uses `--split-per-abi` and publishes
+the architecture-specific APKs linked above. They are for development testing.
 
 ## Evidence and limitations
 
@@ -107,14 +114,20 @@ v5 preservation/settings, committed WAL snapshots versus an uncommitted writer,
 and restore timer pausing without changing events. All **79 Dart files** parse
 and format with a WASM port of `dart_style`; Android XML also parses.
 
-Attempted: `flutter analyze`, a combined Phase 5/existing-regression test command,
-and `flutter build apk --release`. Each exits 1 at SDK bootstrap before its check
-runs. The suite defines **144 tests**, including 38 new Phase 5 cases, but no
-Flutter pass count is claimed. The full Saturday data simulation is defined but
-unrun; all 19 Android acceptance steps remain unrun. Fix any compile/test/build
-failures after dependencies resolve. Parsing and SQL checks do not verify Dart
-types, services, native channels, visual quality, Android lifecycle behavior, or
-release signing. Remaining product limits are documented in the phase notes.
+Verified on [GitHub Actions run 43621338876](https://github.com/Muahid1312/footsallapp/actions/runs/43621338876),
+application commit `2c2cb54`: `flutter analyze` reports no issues; all **145 Flutter
+tests pass**; `flutter build apk --debug --split-per-abi` produces ARM64, ARMv7,
+and x86_64 APKs. The committed dependency lock matches the build. Native tools
+verify the downloaded ARM64 APK's v2 Android Debug signature, package
+`com.saturdayfutsal.app`, display name, and minimum API 24.
+
+The full Saturday data simulation passes, including poster export, backup,
+restore, and reopening persisted records. All 19 physical Android acceptance steps
+remain unrun. Local cloud Flutter/release attempts still stop at SDK bootstrap;
+private release signing is absent. Unit/widget tests and a signed debug APK do not
+establish on-device camera/share/lifecycle behavior, visual quality, or production
+readiness. See [build verification](docs/build-verification.md) for exact artifacts
+and [Phase 5 limits](docs/phase5.md) for remaining product constraints.
 
 ## Files and data
 

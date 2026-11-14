@@ -1,9 +1,11 @@
 # Phase 5 — posters, photos, import, backup, settings, and Android release
 
-**Release verdict: NO-GO.** Source implementation is present, but Flutter type
-analysis, Flutter tests, Android packaging, and device acceptance are unverified.
-The Dart SDK download from `storage.googleapis.com` still returns HTTP 403.
-Release signing credentials are absent. No APK has been generated.
+**Production release verdict: NO-GO.** GitHub Actions now completes clean Dart
+analysis, all 145 Flutter tests, and ARM64/ARMv7/x86_64 debug APK builds. Personal
+testing APKs are linked from the root README; the downloaded ARM64 APK signature
+and package were verified. Physical Android acceptance and private release signing
+remain outstanding. Local cloud SDK bootstrap still returns HTTP 403; verification
+ran on GitHub's runner. See [build verification](build-verification.md).
 
 ## Delivered source and entry points
 
@@ -199,28 +201,30 @@ WAL snapshots versus an uncommitted writer, and staged live-timer recovery SQL.
 All 79 Dart files parse/format with a WASM port of `dart_style`; Android XML parses.
 These are supplementary checks, not Dart type analysis or execution of Dart services.
 
-**Attempted, exited 1 before execution:** `flutter analyze`, the combined Phase 5
-and existing regression test command, and `flutter build apk --release`. All fail
-at the unchanged SDK artifact HTTP 403. No Flutter test count is claimed as passed.
-The full suite now defines **144 tests**, adding 38 in this phase: 11 CSV/import,
+**Verified on GitHub:** application commit `2c2cb54`, run `43621338876`, passes
+`flutter analyze` with no issues and all **145 Flutter tests**. The split debug
+APK build also succeeds. Local cloud analyze/test/release attempts remain blocked
+by SDK artifact HTTP 403. This phase adds 38 cases: 11 CSV/import,
 eight poster/photo, six ZIP, nine backup/restore, two migration/settings, one full
-Saturday data simulation, and one settings/new-session widget test.
+Saturday data simulation, and one settings/new-session widget test. A further
+balancing test verifies an unavoidable strength gap honestly. CI findings in the
+restore screen, gradient stops, test imports, and avatar loading were fixed.
 
 The Saturday simulation covers import, managed photo assignment, three balanced
 teams, fixtures, timed events, standings/champion, MVP, PNG file export, backup,
-restore, file reopening, and preserved source records. It is **defined but unrun**.
+restore, file reopening, and preserved source records. It **passes in CI**.
 It does not verify Android gallery/camera, save picker, share recipients, or physical
 process termination. Device discovery also failed because this instance's ADB could
 not create `/home/agent/.android` on a read-only filesystem. Device availability
 has therefore not been established.
 
-All 19 requested Android acceptance steps remain **UNRUN**. After SDK access and
-signing are resolved, execute the root README commands and test the full workflow
+All 19 requested physical Android acceptance steps remain **UNRUN**. Install the
+testing APK on a suitable Android device and test the full workflow
 on a mid-range Android device in airplane mode, including background/process death,
 timer review, cancelled export/picker flows, all three poster styles and both sizes,
 missing photos, shared champions, multi-page squads, failed/corrupt restore, successful
-restore, previous-data recovery, and restart preservation. Run one full regression
-pass after targeted checks succeed; do not repeatedly retry the unchanged SDK block.
+restore, previous-data recovery, and restart preservation. Further test runs should
+follow relevant changes or failures; do not repeatedly retry the unchanged local SDK block.
 
 ## Release signing, build, and installation
 
@@ -245,8 +249,10 @@ phone and explicitly allow installation from that source. Updates require the sa
 signing key as the installed app; preserve/export data before changing signing.
 Do not uninstall merely to bypass a signing mismatch.
 
-Personal development testing can use `flutter build apk --debug` and
-`adb install -r build/app/outputs/flutter-apk/app-debug.apk` after dependencies work.
-That is development signing and is not a public-distribution release. No debug APK
-has been produced here either. A successful build would still require actual
-launch/acceptance verification before changing the release verdict to GO.
+Personal development testing can use the generated architecture-specific APKs from
+[the verified testing build](https://github.com/Muahid1312/footsallapp/releases/tag/debug-2c2cb54).
+For most phones, install `app-arm64-v8a-debug.apk` using Android's installer or
+`adb install -r app-arm64-v8a-debug.apk`. The ARM64 artifact was downloaded and
+verified as development-signed, package `com.saturdayfutsal.app`, minimum API 24.
+Actual launch/acceptance verification and private production signing are still
+required before changing the production verdict to GO.
